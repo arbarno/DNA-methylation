@@ -7,6 +7,13 @@ Analyzing DNA methylation data from nanopore sequencing reads involves several s
 
 Assess the quality of the raw nanopore reads using tools like FastQC or NanoPlot to identify any issues that may need attention.
 
+https://github.com/wdecoster/NanoPlot
+
+````bash
+NanoPlot -t 2 --fastq reads1.fastq.gz reads2.fastq.gz --maxlength 40000 --plots hex dot
+````
+- No ver informative but we can give it try
+  
 ## Basecalling:
 
 Convert raw signal data from the nanopore sequencer to sequence data (FASTQ format) using a basecalling software like Guppy (developed by Oxford Nanopore Technologies) or Albacore.
