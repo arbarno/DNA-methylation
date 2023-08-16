@@ -26,6 +26,8 @@ https://timkahlke.github.io/LongRead_tutorials/BS_G.html
 
 Map the nanopore reads to a reference genome using a suitable aligner like Minimap2 or GraphMap.
 
+minimap2 -ax map-ont -t 40 Reference.fasta reads.fastq |samtools sort -@40 -O BAM -o mapped.bam -
+
 ## DNA Methylation Calling:
 
 Detect methylated bases in the aligned reads. For nanopore sequencing data, methylation is typically detected through the modification of the electrical signal by DNA methyltransferases.
