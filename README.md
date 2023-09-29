@@ -5,6 +5,13 @@ Analyzing DNA methylation data from nanopore sequencing reads involves several s
 
 - Another useful tuterial: https://timkahlke.github.io/LongRead_tutorials/
 
+
+  
+## Adapter Removal using PoreChop:
+
+````bash
+porechop –i reads.fastq -o reads_porechopped.fastq --discard_middle
+````
 ## Quality Control:
 
 Assess the quality of the raw nanopore reads using tools like FastQC or NanoPlot to identify any issues that may need attention.
@@ -14,14 +21,13 @@ https://github.com/wdecoster/NanoPlot
 ````bash
 NanoPlot -t 2 --fastq reads1.fastq.gz reads2.fastq.gz --maxlength 40000 --plots hex dot
 ````
-- No very informative but we can give it try
-  
-## Basecalling:
+- No very informative but we can give it a try
 
-Convert raw signal data from the nanopore sequencer to sequence data (FASTQ format) using a basecalling software like Guppy (developed by Oxford Nanopore Technologies) or Albacore.
+## Genome assembly
+using Flye, CANU, and MaSuRCA .....
 
-https://timkahlke.github.io/LongRead_tutorials/BS_G.html
-
+## Genome assembly assessment 
+-using BTK,.....
 ## Read Alignment:
 
 Map the nanopore reads to a reference genome using a suitable aligner like Minimap2 or GraphMap.
