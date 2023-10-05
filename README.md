@@ -29,7 +29,7 @@ using Flye, CANU, and MaSuRCA .....
 ### 1. Flye
 
 ````bash
-flye --genome-size 0.421g --input [input.fastq] --out-dir [output_directory]
+flye --genome-size  --nano-hq 0.421g --input [input.fastq] --out-dir [output_directory]
 ````
 ### 2. CANU
 
