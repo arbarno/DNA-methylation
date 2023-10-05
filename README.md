@@ -25,12 +25,37 @@ NanoPlot -t 2 --fastq reads1.fastq.gz reads2.fastq.gz --maxlength 40000 --plots 
 
 ## Genome assembly
 using Flye, CANU, and MaSuRCA .....
-### Flye
+
+### 1. Flye
 
 ````bash
 flye --genome-size 0.421g --input [input.fastq] --out-dir [output_directory]
 ````
+### 2. CANU
 
+````bash
+canu -p [output_prefix] -d [output_directory] genomeSize=[genome_size] -nanopore-raw [input.fastq]
+````
+### 3.MaSuRCA
+
+````bash
+runCanu.sh nanopore-[read_type] [config_file]
+````
+- Configuration file for MaSuRCA
+
+````bash
+# Configuration file for MaSuRCA
+
+DATA
+  PE = 
+  JUMP = 
+  OTHER = nanopore-[read_type] raw_reads.fastq
+  # Add additional libraries as needed
+
+PARAMETERS
+  # Specify assembly parameters here, such as genome size estimate, k-mer size, etc.
+
+````
 ## Genome assembly assessment 
 -using BTK,.....
 ## Read Alignment:
