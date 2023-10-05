@@ -25,6 +25,11 @@ NanoPlot -t 2 --fastq reads1.fastq.gz reads2.fastq.gz --maxlength 40000 --plots 
 
 ## Genome assembly
 using Flye, CANU, and MaSuRCA .....
+### Flye
+
+````bash
+flye --genome-size 0.421g --input [input.fastq] --out-dir [output_directory]
+````
 
 ## Genome assembly assessment 
 -using BTK,.....
