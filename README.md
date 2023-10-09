@@ -56,6 +56,22 @@ PARAMETERS
   # Specify assembly parameters here, such as genome size estimate, k-mer size, etc.
 
 ````
+## Kmer profiling
+Usually, this is for short-reads or high-accurate long reads as "HiFi technology" but we could try
+### genomescope2.0
+https://github.com/tbenavi1/genomescope2.0
+
+````bash
+ls ../*.fastq > FILES
+./bin/kmc -k21 -t50 -m64 -ci1 -cs10000 @FILES reads tmp/
+./bin/kmc_tools transform reads histogram reads.histo -cx10000
+genomescope.R -i ../reads.histo -o output_dir -k 21
+````
+
+### Smudgeplot
+
+https://github.com/KamilSJaron/smudgeplot
+
 
 ## Scaffolding
 Use any of the following:
@@ -77,6 +93,28 @@ links -f <contigs.fasta> -s <scaffolds.fasta> -k <k-mer_size> -l <library_name> 
 
 - -o <output_directory>: Specify the directory where LINKS should save the output files.
 ````
+### TGS-GapCloser
+
+````bash
+TGS-GapCloser -l <reads.fastq> -s <input_assembly.fasta> -o <output_directory>
+
+- -l <reads.fastq>: Specify the path to the nanopore reads in FASTQ format. These reads will be used to close gaps and improve the existing assembly.
+
+- -s <input_assembly.fasta>: Provide the path to the existing nanopore assembly that you want to improve.
+
+- -o <output_directory>: Specify the directory where TGS-GapCloser should save the improved assembly and other output files.
+````
+
+### Redundans
+
+````bash
+redundans.py -f <assembly.fasta> -o <output_directory>
+
+-f <assembly.fasta>: Replace <assembly.fasta> with the path to your input nanopore assembly in FASTA format.
+
+-o <output_directory>: Specify the directory where Redundans should save the output files, including the improved assembly.
+````
+
 
 ## Genome assembly assessment 
 -using BTK,.....
