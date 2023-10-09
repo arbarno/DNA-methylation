@@ -56,6 +56,28 @@ PARAMETERS
   # Specify assembly parameters here, such as genome size estimate, k-mer size, etc.
 
 ````
+
+## Scaffolding
+Use any of the following:
+
+### LINKS
+
+````bash
+links -f <contigs.fasta> -s <scaffolds.fasta> -k <k-mer_size> -l <library_name> -d <library_mean> -o <output_directory>
+
+- -f <contigs.fasta>: This should be replaced with the path to your input contig assembly in FASTA format.
+
+- -s <scaffolds.fasta>: Specify the path where you want the scaffolded output to be saved in FASTA format.
+
+- -k <k-mer_size>: Set the k-mer size used for building the contig graph. The choice of k-mer size depends on your data, but typical values range from 17 to 21.
+
+- -l <library_name>: Assign a name or identifier to your sequencing library.
+
+- -d <library_mean>: Set the mean insert size of your library. This parameter depends on the specific library preparation method and data you have. You may need to calculate this value based on your data or refer to the documentation of your sequencing library.
+
+- -o <output_directory>: Specify the directory where LINKS should save the output files.
+````
+
 ## Genome assembly assessment 
 -using BTK,.....
 ## Read Alignment:
@@ -65,6 +87,7 @@ Map the nanopore reads to a reference genome using a suitable aligner like Minim
 ````bash
 minimap2 -ax map-ont -t 40 Reference.fasta reads.fastq |samtools sort -@40 -O BAM -o mapped.bam -
 ````
+
 ## DNA Methylation Calling:
 
 Detect methylated bases in the aligned reads. For nanopore sequencing data, methylation is typically detected through the modification of the electrical signal by DNA methyltransferases.
