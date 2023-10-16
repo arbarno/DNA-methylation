@@ -10,7 +10,7 @@ Analyzing DNA methylation data from nanopore sequencing reads involves several s
 ## Adapter Removal using PoreChop:
 
 ````bash
-porechop –i reads.fastq -o reads_porechopped.fastq --discard_middle
+porechop –-input reads.fastq -o reads_porechopped.fastq --discard_middle
 ````
 ## Quality Control:
 
@@ -19,9 +19,9 @@ Assess the quality of the raw nanopore reads using tools like FastQC or NanoPlot
 https://github.com/wdecoster/NanoPlot
 
 ````bash
-NanoPlot -t 2 --fastq reads1.fastq.gz reads2.fastq.gz --maxlength 40000 --plots hex dot
+NanoPlot -t 2 --fastq reads1.fastq.gz reads2.fastq.gz --maxlength 40000 --plots dot --legacy hex
 ````
-- No very informative but we can give it a try
+- Not very informative but we can give it a try
 
 ## Genome assembly
 using Flye, CANU, and MaSuRCA .....
@@ -29,12 +29,12 @@ using Flye, CANU, and MaSuRCA .....
 ### 1. Flye
 
 ````bash
-flye --nano-hq --genome-size 0.421g --input [input.fastq] --out-dir [output_directory]
+flye --nano-hq -g 0.421g --input [input.fastq] --out-dir [output_directory] --scaffold -t 50
 ````
 ### 2. CANU
 
 ````bash
-canu -p [output_prefix] -d [output_directory] genomeSize=[genome_size] -nanopore-raw [input.fastq]
+canu -p [output_prefix] -d [output_directory] genomeSize=0.421g stopOnLowCoverage=5 -nanopore-raw [input.fastq]
 ````
 ### 3.MaSuRCA
 
