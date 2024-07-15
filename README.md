@@ -5,107 +5,129 @@ Analyzing DNA methylation data from nanopore sequencing reads involves several s
 
 - Another useful tuterial: https://timkahlke.github.io/LongRead_tutorials/
 
+## Quality Control:
 
+Assess the quality of the raw nanopore reads using NanoPlot to identify any issues that may need attention.
+
+https://github.com/wdecoster/NanoPlot
+
+````bash
+NanoPlot -t 16 --fastq reads1.fastq.gz reads2.fastq.gz --maxlength 40000 --plots dot --legacy hex
+````
   
 ## Adapter Removal using PoreChop:
 
 ````bash
 porechop –-input reads.fastq -o reads_porechopped.fastq --discard_middle
 ````
-## Quality Control:
-
-Assess the quality of the raw nanopore reads using tools like FastQC or NanoPlot to identify any issues that may need attention.
-
-https://github.com/wdecoster/NanoPlot
-
-````bash
-NanoPlot -t 2 --fastq reads1.fastq.gz reads2.fastq.gz --maxlength 40000 --plots dot --legacy hex
-````
-- Not very informative but we can give it a try
-
-## Genome assembly
-using Flye, CANU, and MaSuRCA .....
-
-### 1. Flye
-
-````bash
-flye --nano-hq -g 0.421g --input [input.fastq] --out-dir [output_directory] --scaffold -t 50
-````
-### 2. CANU
-
-````bash
-canu -p [output_prefix] -d [output_directory] genomeSize=0.421g stopOnLowCoverage=5 -nanopore-raw [input.fastq]
-````
-### 3.MaSuRCA
-
-````bash
-runCanu.sh nanopore-[read_type] [config_file]
-````
-- Configuration file for MaSuRCA
-
-````bash
-# Configuration file for MaSuRCA
-
-DATA
-  PE = 
-  JUMP = 
-  OTHER = nanopore-[read_type] raw_reads.fastq
-  # Add additional libraries as needed
-
-PARAMETERS
-  # Specify assembly parameters here, such as genome size estimate, k-mer size, etc.
-
-````
-## Kmer profiling
+## Kmer profiling:
 Usually, this is for short-reads or high-accurate long reads as "HiFi technology" but we could try
 ### genomescope2.0
 https://github.com/tbenavi1/genomescope2.0
-
-````bash
-ls ../*.fastq > FILES
-./bin/kmc -k21 -t50 -m64 -ci1 -cs10000 @FILES reads tmp/
-./bin/kmc_tools transform reads histogram reads.histo -cx10000
-genomescope.R -i ../reads.histo -o output_dir -k 21
-````
-
+I ran the kmer profiling using KMC, then inputted the graph into the Genome-scope website: 
+http://genomescope.org/genomescope2.0/
 ### Smudgeplot
-
+I tried smudgeplot, but it kept crashing (memory).
 https://github.com/KamilSJaron/smudgeplot
 
+````bash
+kmc -k21 -t50 -m128 -ci1 -cs10000 reads_porechopped.fastq kmcdb output/
+kmc_tools transform kmcdb histogram kmcdb_21.histo -cx10000
+````
+
+## Genome assembly
+Tested using using Flye (with the nano_corr, nano_hq, and nano_raw setting), NECAT, and CANU
+The best assembly was Flye nano_corr, so this was used for all samples.
+
+### 1a. Flye (nano_corr)
+
+````bash
+flye --nano-corr [input.fastq] -g 421m -o [output_directory] --scaffold -t 32
+````
+### 1b. Flye (nano_hq)
+
+````bash
+flye --nano-hq [input.fastq] -g 421m -o [output_directory] --scaffold -t 32
+````
+### 1c. Flye (nano_raw)
+
+````bash
+flye --nano-raw [input.fastq] -g 421m -o [output_directory] --scaffold -t 32
+````
+### 2.NECAT
+
+````bash
+necat.pl correct acro_config.txt
+necat.pl assemble acro_config.txt
+necat.pl bridge acro_config.txt
+````
+- Configuration file for NECAT
+
+````bash
+PROJECT=acro_necat
+ONT_READ_LIST=/ibex/project/c2208/nanopore/tests/read_list.txt
+GENOME_SIZE=421000000
+THREADS=1
+MIN_READ_LENGTH=1000
+PREP_OUTPUT_COVERAGE=20
+OVLP_FAST_OPTIONS=-n 500 -z 20 -b 2000 -e 0.5 -j 0 -u 1 -a 1000
+OVLP_SENSITIVE_OPTIONS=-n 500 -z 10 -e 0.5 -j 0 -u 1 -a 1000
+CNS_FAST_OPTIONS=-a 2000 -x 4 -y 12 -l 1000 -e 0.5 -p 0.8 -u 0
+CNS_SENSITIVE_OPTIONS=-a 2000 -x 4 -y 12 -l 1000 -e 0.5 -p 0.8 -u 0
+TRIM_OVLP_OPTIONS=-n 100 -z 10 -b 2000 -e 0.5 -j 1 -u 1 -a 400
+ASM_OVLP_OPTIONS=-n 100 -z 10 -b 2000 -e 0.5 -j 1 -u 0 -a 400
+NUM_ITER=2
+CNS_OUTPUT_COVERAGE=10
+CLEANUP=1
+USE_GRID=false
+GRID_NODE=0
+GRID_OPTIONS=
+SMALL_MEMORY=0
+FSA_OL_FILTER_OPTIONS=
+FSA_ASSEMBLE_OPTIONS=
+FSA_CTG_BRIDGE_OPTIONS=
+POLISH_CONTIGS=true
+````
+### 3. CANU
+
+````bash
+canu -p [output_prefix] -d [output_directory] genomeSize=421m -nanopore -trimmed -correct -assemble [input.fastq]
+````
+## Medaka for polishing the contigs
+
+### Medaka
+
+````bash
+mini_align -r ${f} -i ../porechop/${name}_porechopped.fastq.gz -m -p ../medaka/${name}_calls_to_draft -t 32
+
+samtools view -H ${f} | grep "^@SQ" | cut -f 2,3 | sed 's/SN://; s/\tLN//' > ${name}_regions.txt
+sed -i 's/:/:0-/g' ${name}_regions.txt
+split -d -n l/20 ${name}_regions.txt ${name}_split_regions- --additional-suffix .txt
+
+xargs -n 1 < ${name}_split_regions-00.txt | xargs medaka consensus ${f} /ibex/project/c2208/nanopore/medaka/temp/${name}_split_regions-00.hdf --model r1041_e82_400bps_sup_v4.2.0 --batch 200 --threads 8 --region
+
+medaka stitch temp/${name}*.hdf ../flye/${name}_assembly.fasta results/${name}.polished.assembly.fasta
+````
 
 ## Scaffolding
-Use any of the following:
+LINKS was used first for scaffolding, then the gaps were filled from this output using TGS-GapCloser
 
 ### LINKS
 
 ````bash
-links -f <contigs.fasta> -s <scaffolds.fasta> -k <k-mer_size> -l <library_name> -d <library_mean> -o <output_directory>
-
-- -f <contigs.fasta>: This should be replaced with the path to your input contig assembly in FASTA format.
-
-- -s <scaffolds.fasta>: Specify the path where you want the scaffolded output to be saved in FASTA format.
-
-- -k <k-mer_size>: Set the k-mer size used for building the contig graph. The choice of k-mer size depends on your data, but typical values range from 17 to 21.
-
-- -l <library_name>: Assign a name or identifier to your sequencing library.
-
-- -d <library_mean>: Set the mean insert size of your library. This parameter depends on the specific library preparation method and data you have. You may need to calculate this value based on your data or refer to the documentation of your sequencing library.
-
-- -o <output_directory>: Specify the directory where LINKS should save the output files.
+LINKS -f ${f} -s ${name}_porechop.fof -k 21 -t 10 -b ../../links/${name}
 ````
 ### TGS-GapCloser
 
 ````bash
-TGS-GapCloser -l <reads.fastq> -s <input_assembly.fasta> -o <output_directory>
-
-- -l <reads.fastq>: Specify the path to the nanopore reads in FASTQ format. These reads will be used to close gaps and improve the existing assembly.
-
-- -s <input_assembly.fasta>: Provide the path to the existing nanopore assembly that you want to improve.
-
-- -o <output_directory>: Specify the directory where TGS-GapCloser should save the improved assembly and other output files.
+tgsgapcloser --scaff ${f} \
+  --reads ../porechop/fasta/${name}_porechopped.fasta \
+	--output ../tgs_gapcloser/${name} \
+	--racon /ibex/sw/rl9c/racon/1.5.0/rl9_conda3/env/bin/racon \
+	--thread 32
 ````
 
-### Redundans
+### Redundans (WAS NOT USED!)
 
 ````bash
 redundans.py -f <assembly.fasta> -o <output_directory>
@@ -114,7 +136,6 @@ redundans.py -f <assembly.fasta> -o <output_directory>
 
 -o <output_directory>: Specify the directory where Redundans should save the output files, including the improved assembly.
 ````
-
 
 ## Genome assembly assessment 
 ### BlobToolKit (BTK)
