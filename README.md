@@ -24,10 +24,14 @@ porechop –-input reads.fastq -o reads_porechopped.fastq --discard_middle
 Usually, this is for short-reads or high-accurate long reads as "HiFi technology" but we could try
 ### genomescope2.0
 https://github.com/tbenavi1/genomescope2.0
+
 I ran the kmer profiling using KMC, then inputted the graph into the Genome-scope website: 
+
 http://genomescope.org/genomescope2.0/
+
 ### Smudgeplot
 I tried smudgeplot, but it kept crashing (memory).
+
 https://github.com/KamilSJaron/smudgeplot
 
 ````bash
@@ -37,6 +41,7 @@ kmc_tools transform kmcdb histogram kmcdb_21.histo -cx10000
 
 ## Genome assembly
 Tested using using Flye (with the nano_corr, nano_hq, and nano_raw setting), NECAT, and CANU
+
 The best assembly was Flye nano_corr, so this was used for all samples.
 
 ### 1a. Flye (nano_corr)
