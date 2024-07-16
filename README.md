@@ -59,7 +59,7 @@ flye --nano-hq [input.fastq] -g 421m -o [output_directory] --scaffold -t 32
 ````bash
 flye --nano-raw [input.fastq] -g 421m -o [output_directory] --scaffold -t 32
 ````
-### 2.NECAT
+### 2. NECAT
 
 ````bash
 necat.pl correct acro_config.txt
@@ -144,8 +144,10 @@ redundans.py -f <assembly.fasta> -o <output_directory>
 
 ## Genome assembly assessment 
 ### BlobToolKit (BTK)
-- You can find information about the tool in this course https://www.futurelearn.com/courses/eukaryotic-genome-assembly-how-to-use-blobtoolkit-for-quality-assessment
-- Here is a handbook for installation and running the tool https://github.com/blobtoolkit/tutorials/tree/main/futurelearn 
+- You can find information about the tool in this course:
+https://www.futurelearn.com/courses/eukaryotic-genome-assembly-how-to-use-blobtoolkit-for-quality-assessment
+- Here is a handbook for installation and running the tool:
+https://github.com/blobtoolkit/tutorials/tree/main/futurelearn 
 
 ## Read Alignment:
 
