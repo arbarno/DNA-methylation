@@ -147,14 +147,43 @@ redundans.py -f <assembly.fasta> -o <output_directory>
 - You can find information about the tool in this course:
 https://www.futurelearn.com/courses/eukaryotic-genome-assembly-how-to-use-blobtoolkit-for-quality-assessment
 - Here is a handbook for installation and running the tool:
-https://github.com/blobtoolkit/tutorials/tree/main/futurelearn 
+https://github.com/blobtoolkit/tutorials/tree/main/futurelearn
+
+Create the blobtools file and add the blast, diamond, buscos, and coverages.
+
+````bash
+blobtools create --fasta ${f} --meta ../btk/acropora.yaml  --taxdump ../btk/taxdump/ ../${name}_btk
+blobtools add --hits ../btk/blastn_nt/${name}_blastn.out \
+	--hits ../btk/diamond_uniprot/${name}_diamond_uniprot.out \
+	--taxrule bestsumorder --taxdump ../btk/taxdump/ ../${name}_btk
+blobtools add --cov ../btk/minimap_cov/${name}_coverage.bam --threads 30 ../${name}_btk
+blobtools add --busco ../btk/busco_outputs/${name}_busco/run_eukaryota_odb10/full_table.tsv ../${name}_btk
+````
+
+Filter the btk files to keep only the contigs that hit to Acropora + no-hit (or just Acropora)
+
+````bash
+blobtools filter \
+	--param length--Min=1000 \
+	--param bestsumorder_phylum--Inv=Cnidaria,no-hit \
+	--param bestsumorder_genus--Inv=Acropora,no-hit \
+	--fasta ../tgs_gapcloser/${name}.scaff_seqs \
+	../${name}_btk/
+````
+
+## Create consensus sequence
+
+Using pangenome analysis (anvio?), filter only regions that are shared among all 12 samples to allow for direct comparison of methylation of genes contained in each sample.
 
 ## Read Alignment:
 
-Map the nanopore reads to a reference genome using a suitable aligner like Minimap2 or GraphMap.
+Map the nanopore reads to the consensus genomes using Minimap2, then filter the original bam files that contain the methylation data.
 
 ````bash
-minimap2 -ax map-ont -t 40 Reference.fasta reads.fastq |samtools sort -@40 -O BAM -o mapped.bam -
+minimap2 -ax map-ont -t 40 ${f} ../raw/${name}.fastq.gz | samtools sort -@40 -O BAM -o ../mapped_bam/${name}.mapped.bam
+samtools view -b -F 4 ../mapped_bam/${name}.mapped.bam > ../mapped_bam/${name}.mapped_filtered.bam
+samtools view ../mapped_bam/${name}.mapped_filtered.bam | cut -f 1 > ../mapped_bam/${name}.mapped_read_names.txt
+samtools view -h ../bam/${name}.bam | grep -F -w -f ../mapped_bam/${name}.mapped_read_names.txt | samtools view -Sb - > ../filtered_bam/${name}.filtered.bam
 ````
 
 ## DNA Methylation Calling:
