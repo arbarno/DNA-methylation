@@ -11,7 +11,7 @@ Below is a general outline of a DNA methylation analysis pipeline for nanopore r
 ### NanoPlot
 https://github.com/wdecoster/NanoPlot
 
-NanoPlot v1.42.0
+NanoPlot v1.42.0<br/>
 input files: ONT long reads
 
 ````bash
@@ -22,7 +22,7 @@ NanoPlot -t 16 --fastq long_reads.fastq.gz --maxlength 40000 --plots dot --legac
 Usually, this is for short-reads or high-accurate long reads as "HiFi technology" but we could try
 
 ### genomescope2.0
-https://github.com/tbenavi1/genomescope2.0
+https://github.com/tbenavi1/genomescope2.0 
 http://genomescope.org/genomescope2.0/
 ### Smudgeplot
 https://github.com/KamilSJaron/smudgeplot
@@ -32,8 +32,8 @@ https://github.com/KamilSJaron/smudgeplot
 ### MaSuRCA
 https://github.com/alekseyzimin/masurca
 
-MaSuRCA v4.1.0
-input files: Ultima short reads (SE 300bp) + ONT long reads
+MaSuRCA v4.1.0<br/>
+input files: Ultima short reads (SE 300bp) + ONT long reads<br/>
 Species: _Acropora glandularis_
 
 ````bash
@@ -45,8 +45,8 @@ masurca -i short_reads.fastq.gz -r long_reads.fastq.gz -t 32
 ### CSAR
 https://github.com/ablab-nthu/CSAR
 
-CSAR v1.1.1
-input files: MaSuRCA assembly + reference genome (in this case _Acropora millepora_ because it was the closest relative via BLAST)
+CSAR v1.1.1<br/>
+input files: MaSuRCA assembly + reference genome (in this case _Acropora millepora_ because it was the closest relative from BLAST)<br/>
 _A. millepora_ reference: GCA_013753865.1
 
 ````bash
@@ -62,8 +62,8 @@ conda deactivate
 ### Racon
 https://github.com/isovic/racon
 
-minimap2 v2.24
-racon v1.5.0
+minimap2 v2.24<br/>
+racon v1.5.0<br/>
 input files: CSAR scaffolds + ONT long reads
 
 ````bash
@@ -75,10 +75,10 @@ racon -u -m 3 -x -5 -g -4 -w 500 -t 32 long_reads.fastq.gz mapped_long_reads.sam
 ### Pilon
 https://github.com/broadinstitute/pilon/wiki
 
-java v19.0.1
-minimap2 v2.24
-samtools v1.16.1
-pilon v1.24
+java v19.0.1<br/>
+minimap2 v2.24<br/>
+samtools v1.16.1<br/>
+pilon v1.24<br/>
 input files: racon-polished scaffolds + Ultima short reads
 
 ````bash
