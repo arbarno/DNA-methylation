@@ -1,0 +1,17 @@
+assembly:
+  level: contig
+settings:
+  foo: 0
+similarity:
+  diamond_blastx:
+    foo: 0
+taxon:
+  class: Anthozoa
+  family: Acroporidae
+  genus: Acropora
+  kingdom: Metazoa
+  name: genus_name
+  order: Scleractinia
+  phylum: Cnidaria
+  superkingdom: Eukaryota
+  taxid: 6127
