@@ -1,5 +1,6 @@
 # DNA-methylation
-Analyzing DNA methylation data from nanopore sequencing reads involves several steps to process, align, and extract methylation information from the raw data. Below is a general outline of a DNA methylation analysis pipeline for nanopore reads data:
+Analyzing DNA methylation data from nanopore sequencing reads involves several steps to process, align, and extract methylation information from the raw data.
+Below is a general outline of a DNA methylation analysis pipeline for nanopore reads data:
 
 (https://genomebiology.biomedcentral.com/articles/10.1186/s13059-021-02510-z)  
 
@@ -7,175 +8,201 @@ Analyzing DNA methylation data from nanopore sequencing reads involves several s
 
 ## Quality Control:
 
-Assess the quality of the raw nanopore reads using NanoPlot to identify any issues that may need attention.
-
+### NanoPlot
 https://github.com/wdecoster/NanoPlot
 
+NanoPlot v1.42.0
+input files: ONT long reads
+
 ````bash
-NanoPlot -t 16 --fastq reads1.fastq.gz reads2.fastq.gz --maxlength 40000 --plots dot --legacy hex
+NanoPlot -t 16 --fastq long_reads.fastq.gz --maxlength 40000 --plots dot --legacy hex
 ````
   
-## Adapter Removal using PoreChop:
-
-````bash
-porechop –-input reads.fastq -o reads_porechopped.fastq --discard_middle
-````
 ## Kmer profiling:
 Usually, this is for short-reads or high-accurate long reads as "HiFi technology" but we could try
+
 ### genomescope2.0
 https://github.com/tbenavi1/genomescope2.0
-
-I ran the kmer profiling using KMC, then inputted the graph into the Genome-scope website: 
-
 http://genomescope.org/genomescope2.0/
-
 ### Smudgeplot
-I tried smudgeplot, but it kept crashing (memory).
-
 https://github.com/KamilSJaron/smudgeplot
 
-````bash
-kmc -k21 -t50 -m128 -ci1 -cs10000 reads_porechopped.fastq kmcdb output/
-kmc_tools transform kmcdb histogram kmcdb_21.histo -cx10000
-````
-
 ## Genome assembly
-Tested using using Flye (with the nano_corr, nano_hq, and nano_raw setting), NECAT, and CANU
 
-The best assembly was Flye nano_corr, so this was used for all samples.
+### MaSuRCA
+https://github.com/alekseyzimin/masurca
 
-### 1a. Flye (nano_corr)
-
-````bash
-flye --nano-corr [input.fastq] -g 421m -o [output_directory] --scaffold -t 32
-````
-### 1b. Flye (nano_hq)
+MaSuRCA v4.1.0
+input files: Ultima short reads (SE 300bp) + ONT long reads
+Species: _Acropora glandularis_
 
 ````bash
-flye --nano-hq [input.fastq] -g 421m -o [output_directory] --scaffold -t 32
-````
-### 1c. Flye (nano_raw)
-
-````bash
-flye --nano-raw [input.fastq] -g 421m -o [output_directory] --scaffold -t 32
-````
-### 2. NECAT
-
-````bash
-necat.pl correct acro_config.txt
-necat.pl assemble acro_config.txt
-necat.pl bridge acro_config.txt
-````
-- Configuration file for NECAT
-
-````bash
-PROJECT=acro_necat
-ONT_READ_LIST=/ibex/project/c2208/nanopore/tests/read_list.txt
-GENOME_SIZE=421000000
-THREADS=1
-MIN_READ_LENGTH=1000
-PREP_OUTPUT_COVERAGE=20
-OVLP_FAST_OPTIONS=-n 500 -z 20 -b 2000 -e 0.5 -j 0 -u 1 -a 1000
-OVLP_SENSITIVE_OPTIONS=-n 500 -z 10 -e 0.5 -j 0 -u 1 -a 1000
-CNS_FAST_OPTIONS=-a 2000 -x 4 -y 12 -l 1000 -e 0.5 -p 0.8 -u 0
-CNS_SENSITIVE_OPTIONS=-a 2000 -x 4 -y 12 -l 1000 -e 0.5 -p 0.8 -u 0
-TRIM_OVLP_OPTIONS=-n 100 -z 10 -b 2000 -e 0.5 -j 1 -u 1 -a 400
-ASM_OVLP_OPTIONS=-n 100 -z 10 -b 2000 -e 0.5 -j 1 -u 0 -a 400
-NUM_ITER=2
-CNS_OUTPUT_COVERAGE=10
-CLEANUP=1
-USE_GRID=false
-GRID_NODE=0
-GRID_OPTIONS=
-SMALL_MEMORY=0
-FSA_OL_FILTER_OPTIONS=
-FSA_ASSEMBLE_OPTIONS=
-FSA_CTG_BRIDGE_OPTIONS=
-POLISH_CONTIGS=true
-````
-### 3. CANU
-
-````bash
-canu -p [output_prefix] -d [output_directory] genomeSize=421m -nanopore -trimmed -correct -assemble [input.fastq]
-````
-## Medaka for polishing the contigs
-
-### Medaka
-
-````bash
-mini_align -r ${f} -i ../porechop/${name}_porechopped.fastq.gz -m -p ../medaka/${name}_calls_to_draft -t 32
-
-samtools view -H ${f} | grep "^@SQ" | cut -f 2,3 | sed 's/SN://; s/\tLN//' > ${name}_regions.txt
-sed -i 's/:/:0-/g' ${name}_regions.txt
-split -d -n l/20 ${name}_regions.txt ${name}_split_regions- --additional-suffix .txt
-
-xargs -n 1 < ${name}_split_regions-00.txt | xargs medaka consensus ${f} /ibex/project/c2208/nanopore/medaka/temp/${name}_split_regions-00.hdf --model r1041_e82_400bps_sup_v4.2.0 --batch 200 --threads 8 --region
-
-medaka stitch temp/${name}*.hdf ../flye/${name}_assembly.fasta results/${name}.polished.assembly.fasta
+masurca -i short_reads.fastq.gz -r long_reads.fastq.gz -t 32
 ````
 
-## Scaffolding
-LINKS was used first for scaffolding, then the gaps were filled from this output using TGS-GapCloser
+## Reference-base scaffolding
 
-### LINKS
+### CSAR
+https://github.com/ablab-nthu/CSAR
+
+CSAR v1.1.1
+input files: MaSuRCA assembly + reference genome (in this case _Acropora millepora_ because it was the closest relative via BLAST)
+_A. millepora_ reference: GCA_013753865.1
 
 ````bash
-LINKS -f ${f} -s ${name}_porechop.fof -k 21 -t 10 -b ../../links/${name}
+conda activate csar
+
+php csar.php -t masurca_assembly.fasta -r GCA_013753865.1_Amil_v2.1_genomic.fna --nuc -o output_folder
+
+conda deactivate
 ````
-### TGS-GapCloser
+
+## Polishing the assembly
+
+### Racon
+https://github.com/isovic/racon
+
+minimap2 v2.24
+racon v1.5.0
+input files: CSAR scaffolds + ONT long reads
 
 ````bash
-tgsgapcloser --scaff ${f} \
-  --reads ../porechop/fasta/${name}_porechopped.fasta \
-	--output ../tgs_gapcloser/${name} \
-	--racon /ibex/sw/rl9c/racon/1.5.0/rl9_conda3/env/bin/racon \
-	--thread 32
+minimap2 -t 32 -ax map-ont csar_scaffolds.fna long_reads.fastq.gz -o mapped_long_reads.sam
+
+racon -u -m 3 -x -5 -g -4 -w 500 -t 32 long_reads.fastq.gz mapped_long_reads.sam csar_scaffolds.fna > racon_polished_scaffold.fasta
 ````
 
-### Redundans (WAS NOT USED!)
+### Pilon
+https://github.com/broadinstitute/pilon/wiki
+
+java v19.0.1
+minimap2 v2.24
+samtools v1.16.1
+pilon v1.24
+input files: racon-polished scaffolds + Ultima short reads
 
 ````bash
-redundans.py -f <assembly.fasta> -o <output_directory>
+minimap2 -d  racon_polished_scaffold.mmi racon_polished_scaffold.fasta
+minimap2 -ax sr racon_polished_scaffold.mmi short_reads.fastq.gz > mapped_short_reads.sam
+samtools view -bS mapped_short_reads.sam | samtools sort -o mapped_short_reads.bam
+samtools index mapped_short_reads.bam
 
--f <assembly.fasta>: Replace <assembly.fasta> with the path to your input nanopore assembly in FASTA format.
+java -Xms64G -Xmx128G -jar $PILON \
+	--genome racon_polished_scaffold.fasta \
+	--unpaired mapped_short_reads.bam \
+	--output output_prefix \
+	--changes \
+	--threads 48
+````
 
--o <output_directory>: Specify the directory where Redundans should save the output files, including the improved assembly.
+## Creating homozygous genome assembly
+
+### Redundans
+https://github.com/Gabaldonlab/redundans
+
+redundans v2.0.1
+input files: pilon/racon-polished scaffolds + Ultima short reads + ONT long reads
+
+````bash
+redundans.py -v -i short_reads.fastq.gz \
+	-l long_reads.fastq.gz \
+	-f pilon_racon_polished_scaffold.fasta \
+	-o output_folder \
+	-t 32 \
+	--log log.txt
 ````
 
 ## Genome assembly assessment 
 ### BlobToolKit (BTK)
-- You can find information about the tool in this course:
 https://www.futurelearn.com/courses/eukaryotic-genome-assembly-how-to-use-blobtoolkit-for-quality-assessment
-- Here is a handbook for installation and running the tool:
 https://github.com/blobtoolkit/tutorials/tree/main/futurelearn
 
-Create the blobtools file and add the blast, diamond, buscos, and coverages.
+Create the blobtools input files (blastn, diamond, busco, and coverage)
 
+#### blastn v2.13.0
 ````bash
-blobtools create --fasta ${f} --meta ../btk/acropora.yaml  --taxdump ../btk/taxdump/ ../${name}_btk
-blobtools add --hits ../btk/blastn_nt/${name}_blastn.out \
-	--hits ../btk/diamond_uniprot/${name}_diamond_uniprot.out \
-	--taxrule bestsumorder --taxdump ../btk/taxdump/ ../${name}_btk
-blobtools add --cov ../btk/minimap_cov/${name}_coverage.bam --threads 30 ../${name}_btk
-blobtools add --busco ../btk/busco_outputs/${name}_busco/run_eukaryota_odb10/full_table.tsv ../${name}_btk
+blastn -db NCBI/nt \
+	-query redundans_reduced_scaffolds.fa \
+	-outfmt "6 qseqid staxids bitscore std" \
+	-max_target_seqs 10 \
+	-max_hsps 1 \
+	-evalue 1e-25 \
+	-num_threads 30 \
+	-out scaffolds_nt.blastn
+````
+#### diamond v2.1.6
+````bash
+diamond blastx --query redundans_reduced_scaffolds.fa \
+	--db uniprot/reference_proteomes.dmnd \
+	--outfmt 6 qseqid staxids bitscore qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore \
+	--max-target-seqs 1 \
+	--evalue 1e-25 \
+	--fast \
+	--verbose \
+	--threads 48 > scaffolds_uniprot_diamond.out
+````
+#### busco v5.7.1
+````bash
+busco -i redundans_reduced_scaffolds.fa \
+	-l busco/eukaryota_odb10 \
+	-o scaffolds_output_busco_folder \
+	-m genome \
+	--cpu 30
+````
+#### coverage (minimap2 v2.24, samtools v1.16.1)
+````bash
+minimap2 -ax sr -t 30 redundans_reduced_scaffolds.fa \
+	short_reads.fastq.gz | samtools sort -@30 -O BAM -o scaffolds_coverage.bam
+samtools index -c scaffolds_coverage.bam
 ````
 
-Filter the btk files to keep only the contigs that hit to Acropora + no-hit (or just Acropora)
+Combine files into a single blobtoolkit folder for visualization
+
+#### blobtoolkit v4.4.0
+````bash
+conda activate btk
+
+blobtools create --fasta redundans_reduced_scaffolds.fa \
+	--meta acropora.yaml \
+	--taxdump ncbi_taxdump/ \
+	btk_folder
+blobtools add --hits scaffolds_nt.blastn \
+	--hits scaffolds_uniprot_diamond.out \
+	--taxrule bestsumorder \
+	--taxdump ncbi_taxdump/ \
+	btk_folder
+blobtools add --cov scaffolds_coverage.bam \
+	--threads 30 \
+	btk_folder
+blobtools add --busco scaffolds_output_busco_folder/run_eukaryota_odb10/full_table.tsv \
+	btk_folder
+
+conda deactivate
+````
+
+Filter the btk files to keep only the contigs that hit to phylum = Cnidaria, genus = Acropora, coverage = 0.01
 
 ````bash
+conda activate btk
+
 blobtools filter \
-	--param length--Min=1000 \
-	--param bestsumorder_phylum--Inv=Cnidaria,no-hit \
-	--param bestsumorder_genus--Inv=Acropora,no-hit \
-	--fasta ../tgs_gapcloser/${name}.scaff_seqs \
-	../${name}_btk/
+	--param bestsumorder_phylum--Inv=Cnidaria \
+	--param bestsumorder_genus--Inv=Acropora \
+	--param scaffolds_coverage--Min=0.01 \
+	--fasta redundans_reduced_scaffolds.fa \
+	--summary filter_summary \
+	btk_folder
+
+conda deactivate
 ````
-
-## Create consensus sequence
-
-Using pangenome analysis (anvio?), filter only regions that are shared among all 12 samples to allow for direct comparison of methylation of genes contained in each sample.
 
 ## Read Alignment:
+
+### Adapter Removal using PoreChop:
+
+````bash
+porechop –-input reads.fastq -o reads_porechopped.fastq --discard_middle
+````
 
 Map the nanopore reads to the consensus genomes using Minimap2, then filter the original bam files that contain the methylation data.
 
