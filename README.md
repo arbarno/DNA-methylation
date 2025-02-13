@@ -245,6 +245,49 @@ singularity exec braker3.sif braker.pl --species=A_glandularis --threads 40 \
 	--prot_seq=orthodb12_metazoa_ncbi_acropora_proteins.fa
 ````
 
+### tRNA prediction
+
+````bash
+tRNAscan-SE -E -I -H --detail --thread 50 -o trnascan-se.out -f trnascan-se.tbl -m trnascan-se.log  repeat_masked/genome.fa.masked
+
+EukHighConfidenceFilter -i trnascan-se.out -s trnascan-se.tbl -o eukconf -p filt
+````
+
+- Implement the tRNA-Scan results.
+
+````bash
+#covert tRNA to gff after removing non-high confident
+perl convert_tRNAScanSE_to_gff3.pl --input=trna_data.txt > trna_annotation.gff
+#merge gff files
+agat_sp_merge_annotations.pl --gff braker.gff --gff trna_annotation.gff --out merged.gff
+#export protein sequences to proceed with functional annotation
+gffread merged.gff -g genome.fa -y Acropora.braker.prot.fasta
+````
+# Functional annotation
+
+- transmembrane topology and signal peptide predictor, which requires install phobius
+````bash
+./phobius/phobius.pl -short Acropora.braker.prot.fasta > phobius.results.txt
+````
+- hint: remove the '*' at the end of each protein sequence at Acropora.braker.prot.fasta
+
+- IterProScan (i'm using the funnannotate command)
+
+````bash
+funannotate iprscan -i Acropora.braker.prot.fasta -m docker -c 50
+````
+- eggnog-mapper
+````bash
+
+emapper.py --cpu 50 -m mmseqs --data_dir funannotate_DB  -i Acropora.braker.prot.fasta -o Acropora_eggnog
+````
+
+- Implement annotation using funannotate
+
+````bash
+funannotate annotate --gff merged.gff --fasta genome.fa -s "YOU SPECIES NAME" --busco_db  metazoa --eggnog Acropora_eggnog.emapper.annotations --iprscan Acropora_iprscan.xml --cpus 100 -o Acropora_anno
+````
+
 # DNA methylation analysis
 Now that the reference genome is assembled, we can analyze the DNA methylation of individual samples
 
