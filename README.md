@@ -1,10 +1,14 @@
-# DNA-methylation
+# Analysing coral DNA methylation in parents and gametes using ONT
 Analyzing DNA methylation data from nanopore sequencing reads involves several steps to process, align, and extract methylation information from the raw data.
 Below is a general outline of a DNA methylation analysis pipeline for nanopore reads data:
 
 (https://genomebiology.biomedcentral.com/articles/10.1186/s13059-021-02510-z)  
 
 - Another useful tuterial: https://timkahlke.github.io/LongRead_tutorials/
+
+## Assembling an _Acropora_ reference genomes
+
+We must first make a reference assembly using one of the samples to perform downstream methylation analysis.
 
 ## Quality Control:
 
@@ -241,6 +245,8 @@ singularity exec braker3.sif braker.pl --species=A_glandularis --threads 40 \
 	--prot_seq=orthodb12_metazoa_ncbi_acropora_proteins.fa
 ````
 
+## DNA methylation analysis
+Now that the reference genome is assembled, we can analyze the DNA methylation of individual samples
 
 ## Read Alignment:
 
