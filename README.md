@@ -6,7 +6,7 @@ Below is a general outline of a DNA methylation analysis pipeline for nanopore r
 
 - Another useful tuterial: https://timkahlke.github.io/LongRead_tutorials/
 
-## Assembling an _Acropora_ reference genomes
+# Assembling an _Acropora_ reference genomes
 
 We must first make a reference assembly using one of the samples to perform downstream methylation analysis.
 
@@ -245,7 +245,7 @@ singularity exec braker3.sif braker.pl --species=A_glandularis --threads 40 \
 	--prot_seq=orthodb12_metazoa_ncbi_acropora_proteins.fa
 ````
 
-## DNA methylation analysis
+# DNA methylation analysis
 Now that the reference genome is assembled, we can analyze the DNA methylation of individual samples
 
 ## Read Alignment:
