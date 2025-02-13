@@ -11,7 +11,7 @@ Below is a general outline of a DNA methylation analysis pipeline for nanopore r
 ### NanoPlot
 https://github.com/wdecoster/NanoPlot
 
-NanoPlot v1.42.0<br/>
+NanoPlot v1.42.0  
 input files: ONT long reads
 
 ````bash
@@ -32,8 +32,8 @@ https://github.com/KamilSJaron/smudgeplot
 ### MaSuRCA
 https://github.com/alekseyzimin/masurca
 
-MaSuRCA v4.1.0<br/>
-input files: Ultima short reads (SE 300bp) + ONT long reads<br/>
+MaSuRCA v4.1.0  
+input files: Ultima short reads (SE 300bp) + ONT long reads  
 Species: _Acropora glandularis_
 
 ````bash
@@ -45,8 +45,8 @@ masurca -i short_reads.fastq.gz -r long_reads.fastq.gz -t 32
 ### CSAR
 https://github.com/ablab-nthu/CSAR
 
-CSAR v1.1.1<br/>
-input files: MaSuRCA assembly + reference genome (in this case _Acropora millepora_ because it was the closest relative from BLAST)<br/>
+CSAR v1.1.1  
+input files: MaSuRCA assembly + reference genome (in this case _Acropora millepora_ because it was the closest relative from BLAST)  
 _A. millepora_ reference: GCA_013753865.1
 
 ````bash
@@ -62,8 +62,8 @@ conda deactivate
 ### Racon
 https://github.com/isovic/racon
 
-minimap2 v2.24<br/>
-racon v1.5.0<br/>
+minimap2 v2.24  
+racon v1.5.0  
 input files: CSAR scaffolds + ONT long reads
 
 ````bash
@@ -75,10 +75,10 @@ racon -u -m 3 -x -5 -g -4 -w 500 -t 32 long_reads.fastq.gz mapped_long_reads.sam
 ### Pilon
 https://github.com/broadinstitute/pilon/wiki
 
-java v19.0.1<br/>
-minimap2 v2.24<br/>
-samtools v1.16.1<br/>
-pilon v1.24<br/>
+java v19.0.1  
+minimap2 v2.24  
+samtools v1.16.1  
+pilon v1.24  
 input files: racon-polished scaffolds + Ultima short reads
 
 ````bash
@@ -196,21 +196,84 @@ blobtools filter \
 conda deactivate
 ````
 
+## Gene prediction
+
+Using EDTA and RepeatMasker, DNA repeat regions were first identified and softmasked.  
+Then using BRAKER to generate full gene structure annotations.
+
+### The Extensive de novo TE Annotator (EDTA)
+https://github.com/oushujun/EDTA  
+
+edta v2.0.1  
+input files: btk-filtered _A. gladularis_ assembly genome; related genomes (in this case, 3 NCBI RefSeq _Acropora_ genomes - GCF_000222465.1, GCF_013753865.1, GCF_036669905.1)
+
+````bash
+EDTA.pl --genome genome.fa --sensitive 1 --threads 40
+````
+
+Concatenate the outputs into a single repeat database and get statistics 
+
+````bash
+cat *.TElib.fa > acropora_repeat_library.fa
+grep '>' acropora_repeat_library.fa | sed -r 's/.+#//' | sed -r 's/\s+.+//' | sort | uniq -c > acropora_repeat_stats.txt
+````
+
+### RepeatMasker
+https://github.com/Dfam-consortium/TETools  
+
+repeatmasker v4.1.7  
+input files: btk-filtered _A. gladularis_ assembly genome + _Acropora_ repeat library
+
+````bash
+RepeatMasker genome.fa -lib acropora_repeat_library.fa -pa 1 -norna -xsmall -dir repeat_masked
+````
+
+### BRAKER
+https://github.com/Gaius-Augustus/BRAKER  
+
+singularity v3.9.7  
+braker v3.0.8  
+input files: btk-filtered _A. gladularis_ assembly genome + OrthoDB12 (https://bioinf.uni-greifswald.de/bioinf/partitioned_odb12/Metazoa.fa.gz) concatenated with related proteomes (NCBI RefSeq _Acropora_ genomes - GCF_000222465.1, GCF_013753865.1, GCF_036669905.1)
+
+````bash
+singularity exec braker3.sif braker.pl --species=A_glandularis --threads 40 \
+	--genome=repeat_masked/genome.fa.masked \
+	--prot_seq=orthodb12_metazoa_ncbi_acropora_proteins.fa
+````
+
+
 ## Read Alignment:
 
 ### Adapter Removal using PoreChop:
+https://github.com/rrwick/Porechop
+
+porechop v0.2.4
+input files: ONT long reads
 
 ````bash
 porechop –-input reads.fastq -o reads_porechopped.fastq --discard_middle
 ````
 
-Map the nanopore reads to the consensus genomes using Minimap2, then filter the original bam files that contain the methylation data.
+### Map the nanopore reads to the consensus genomes using Minimap2, then filter the original bam files that contain the methylation data.  
+
+minimap2 v2.24  
+samtools v1.16.1  
+input files: porechopped ONT long reads + raw ONT .bam files (containing methylation information)
 
 ````bash
-minimap2 -ax map-ont -t 40 ${f} ../raw/${name}.fastq.gz | samtools sort -@40 -O BAM -o ../mapped_bam/${name}.mapped.bam
-samtools view -b -F 4 ../mapped_bam/${name}.mapped.bam > ../mapped_bam/${name}.mapped_filtered.bam
-samtools view ../mapped_bam/${name}.mapped_filtered.bam | cut -f 1 > ../mapped_bam/${name}.mapped_read_names.txt
-samtools view -h ../bam/${name}.bam | grep -F -w -f ../mapped_bam/${name}.mapped_read_names.txt | samtools view -Sb - > ../filtered_bam/${name}.filtered.bam
+minimap2 -ax map-ont -t 40 agland_genome.fa.gz reads_porechopped.fastq | samtools sort -@40 -O BAM -o mapped_reads.bam
+samtools view -b -F 4 mapped_reads.bam > mapped_reads_filtered.bam
+samtools view mapped_reads_filtered.bam | cut -f 1 > mapped_reads_names.txt
+samtools view -h reads.bam | grep -F -w -f mapped_reads_names.txt | samtools view -Sb - > filtered_reads.bam
+````
+
+### Determining _Acropora_ total methylation per sample
+
+modkit v0.2.2  
+input files: filtered .bam file that was mapped to the reference genome assembly
+
+````bash
+modkit summary --no-sampling --threads 32 filtered_reads.bam > modkit_summary.txt
 ````
 
 ## DNA Methylation Calling:
