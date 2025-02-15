@@ -1,4 +1,4 @@
-# Analysing coral DNA methylation in parents and gametes using ONT
+# Analyzing coral DNA methylation in parents and gametes using ONT
 Analyzing DNA methylation data from nanopore sequencing reads involves several steps to process, align, and extract methylation information from the raw data.
 Below is a general outline of a DNA methylation analysis pipeline for nanopore reads data:
 
