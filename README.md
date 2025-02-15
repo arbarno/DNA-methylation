@@ -219,7 +219,8 @@ Concatenate the outputs into a single repeat database and get statistics
 
 ````bash
 cat *.TElib.fa > acropora_repeat_library.fa
-grep '>' acropora_repeat_library.fa | sed -r 's/.+#//' | sed -r 's/\s+.+//' | sort | uniq -c > acropora_repeat_stats.txt
+seqkit rmdup -s -i acropora_repeat_lib.fa > acropora_repeat_lib_uniq.fa
+grep '>' acropora_repeat_library_uniq.fa | sed -r 's/.+#//' | sed -r 's/\s+.+//' | sort | uniq -c > acropora_repeat_stats.txt
 ````
 
 ### RepeatMasker
