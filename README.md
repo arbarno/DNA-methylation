@@ -294,27 +294,14 @@ Now that the reference genome is assembled, we can analyze the DNA methylation o
 
 ## Read Alignment:
 
-### Adapter Removal using PoreChop:
-https://github.com/rrwick/Porechop
+### Map the nanopore bam files containing methylation data to the consensus genomes using Dorado.  
 
-porechop v0.2.4
-input files: ONT long reads
-
-````bash
-porechop –-input reads.fastq -o reads_porechopped.fastq --discard_middle
-````
-
-### Map the nanopore reads to the consensus genomes using Minimap2, then filter the original bam files that contain the methylation data.  
-
-minimap2 v2.24  
+dorado v0.9.1 
 samtools v1.16.1  
-input files: porechopped ONT long reads + raw ONT .bam files (containing methylation information)
+input files: _A. gladularis_ assembly genome + raw ONT .bam files (containing methylation information)
 
 ````bash
-minimap2 -ax map-ont -t 40 agland_genome.fa.gz reads_porechopped.fastq | samtools sort -@40 -O BAM -o mapped_reads.bam
-samtools view -b -F 4 mapped_reads.bam > mapped_reads_filtered.bam
-samtools view mapped_reads_filtered.bam | cut -f 1 > mapped_reads_names.txt
-samtools view -h reads.bam | grep -F -w -f mapped_reads_names.txt | samtools view -Sb - > filtered_reads.bam
+dorado aligner aglandularis_ref_genome.fa reads.bam --output-dir aligned_bam
 ````
 
 ### Determining _Acropora_ total methylation per sample
@@ -323,7 +310,7 @@ modkit v0.2.2
 input files: filtered .bam file that was mapped to the reference genome assembly
 
 ````bash
-modkit summary --no-sampling --threads 32 filtered_reads.bam > modkit_summary.txt
+modkit summary --no-sampling --threads 32 aligned_reads.bam > modkit_summary.txt
 ````
 
 ## DNA Methylation Calling:
