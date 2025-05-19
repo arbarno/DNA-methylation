@@ -318,5 +318,5 @@ modkit summary --no-sampling --threads 32 aligned_reads.bam > modkit_summary.txt
 Convert the methylation calls into a more interpretable format (e.g., BED or BEDGraph) for downstream analysis.
 Perform differential methylation analysis, if applicable, to compare methylation patterns between different samples or conditions.
 
-This pipeline was used to assemble the reference genome and analyze the methylation for the purposes of the study analyzed further here:
+This pipeline was used to assemble the reference genome for methylation analysis used in this study:
 https://github.com/arbarno/epibac_heritome
