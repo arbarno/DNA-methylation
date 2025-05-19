@@ -313,34 +313,10 @@ input files: filtered .bam file that was mapped to the reference genome assembly
 modkit summary --no-sampling --threads 32 aligned_reads.bam > modkit_summary.txt
 ````
 
-## DNA Methylation Calling:
-
-Detect methylated bases in the aligned reads. For nanopore sequencing data, methylation is typically detected through the modification of the electrical signal by DNA methyltransferases.
-You can use tools like Tombo, Nanopolish, or DeepSignal to perform methylation calling.
-
 ## Methylation Data Analysis:
 
 Convert the methylation calls into a more interpretable format (e.g., BED or BEDGraph) for downstream analysis.
 Perform differential methylation analysis, if applicable, to compare methylation patterns between different samples or conditions.
 
-## Visualization:
-
-Visualize the methylation patterns using genome browsers or specialized tools like Integrative Genomics Viewer (IGV) or UCSC Genome Browser.
-
-## Annotation:
-
-Annotate the differentially methylated regions (DMRs) with genomic features (e.g., genes, CpG islands) to gain biological insights.
-
-## Functional Enrichment Analysis:
-
-Perform functional enrichment analysis on genes associated with DMRs to understand the potential functional implications of DNA methylation changes.
-
-## Integration with Other Data:
-
-Integrate DNA methylation data with other omics data, such as gene expression or chromatin accessibility data, for a more comprehensive understanding of gene regulation.
-
-## Validation:
-
-If possible, validate the DNA methylation changes using an independent method, such as bisulfite sequencing.
-
-Please note that specific tools and parameters used in the pipeline might vary depending on the characteristics of the nanopore data and the research question you are addressing. It is crucial to refer to the respective software documentation and literature for the most up-to-date protocols and guidelines for DNA methylation analysis with nanopore sequencing data.
+This pipeline was used to assemble the reference genome and analyze the methylation for the purposes of the study analyzed further here:
+https://github.com/arbarno/epibac_heritome
